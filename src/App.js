@@ -5,17 +5,15 @@ import "./App.css"; // CSS 파일 임포트
 function App() {
   const webcamRef = useRef(null);
   const [photos, setPhotos] = useState([]);
-  const [selectedFrame, setSelectedFrame] = useState(""); // 선택된 프레임 저장
-  const [imageUrl, setImageUrl] = useState(""); // 합성된 이미지 URL 저장
-  const [imageFormat, setImageFormat] = useState("image/jpeg"); // 이미지 포맷 설정
-  const [showWebcam, setShowWebcam] = useState(true); // 카메라 표시 여부 상태
-  const [showPreview, setShowPreview] = useState(true); // 미리보기 상태
+  const [selectedFrame, setSelectedFrame] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageFormat, setImageFormat] = useState("image/jpeg");
+  const [showWebcam, setShowWebcam] = useState(true);
+  const [showPreview, setShowPreview] = useState(true);
 
-  // 캡처할 사진 크기 설정
   const targetWidth = 654;
   const targetHeight = 523;
 
-  // 사진 찍기 함수 (크롭 기능 추가)
   const capturePhoto = () => {
     const imageSrc = webcamRef.current.getScreenshot();
     if (!imageSrc) return;
@@ -26,9 +24,11 @@ function App() {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
 
-      let sx = 0, sy = 0, sWidth = img.width, sHeight = img.height;
+      let sx = 0,
+        sy = 0,
+        sWidth = img.width,
+        sHeight = img.height;
 
-      // 사진 크기가 너무 크면 중앙을 기준으로 크롭
       if (img.width > targetWidth || img.height > targetHeight) {
         sx = (img.width - targetWidth) / 2;
         sy = (img.height - targetHeight) / 2;
@@ -38,16 +38,20 @@ function App() {
 
       canvas.width = targetWidth;
       canvas.height = targetHeight;
-      ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, targetWidth, targetHeight);
 
-      const croppedImage = canvas.toDataURL(imageFormat);
+      ctx.save();
+      ctx.translate(targetWidth, 0);
+      ctx.scale(-1, 1); // 사진 찍을 때 좌우반전 적용
+      ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, targetWidth, targetHeight);
+      ctx.restore();
+
+      const flippedImage = canvas.toDataURL(imageFormat);
       if (photos.length < 4) {
-        setPhotos([...photos, croppedImage]);
+        setPhotos([...photos, flippedImage]);
       }
     };
   };
 
-  // 다시 찍기 함수
   const resetPhotos = () => {
     setPhotos([]);
     setImageUrl("");
@@ -56,28 +60,23 @@ function App() {
     setShowPreview(true);
   };
 
-  // 프레임 선택 함수
   const selectFrame = (frame) => {
     setSelectedFrame(frame);
   };
 
-  // 합성된 이미지 만들기 (사진을 크롭하여 배치)
   const createCollage = () => {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
 
-    // 캔버스 크기 설정
     const frameWidth = 1800;
     const frameHeight = 1200;
     canvas.width = frameWidth;
     canvas.height = frameHeight;
 
-    // 프레임 이미지 불러오기
     const frameImg = new Image();
     frameImg.src = selectedFrame;
 
     frameImg.onload = () => {
-      // 4개의 사진을 캔버스에 먼저 그리기
       for (let i = 0; i < photos.length; i++) {
         const img = new Image();
         img.src = photos[i];
@@ -85,7 +84,12 @@ function App() {
         img.onload = () => {
           const x = i % 2 === 0 ? 71 : 741;
           const y = i < 2 ? 68 : 608;
-          ctx.drawImage(img, 0, 0, targetWidth, targetHeight, x, y, targetWidth, targetHeight);
+
+          ctx.save();
+          ctx.translate(x + targetWidth, y); // 위치 유지한 채 좌우반전
+          ctx.scale(-1, 1);
+          ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+          ctx.restore();
 
           if (i === 3) {
             ctx.drawImage(frameImg, 0, 0, frameWidth, frameHeight);
@@ -98,7 +102,6 @@ function App() {
     };
   };
 
-  // 네 컷 사진 미리보기 (크롭된 사진 적용)
   const renderPhotos = () => {
     return (
       <div style={{ position: "relative", width: "1800px", height: "1200px", margin: "20px auto" }}>
@@ -132,6 +135,7 @@ function App() {
                 width: `${targetWidth}px`,
                 height: `${targetHeight}px`,
                 objectFit: "cover",
+                transform: "scaleX(-1)", // 미리보기에서만 좌우반전
                 zIndex: 0,
               }}
             />
@@ -146,7 +150,7 @@ function App() {
       <h1 style={{ fontSize: "2rem", margin: "20px 0" }}>나희네 네컷</h1>
 
       {showWebcam && photos.length < 4 && (
-        <Webcam ref={webcamRef} screenshotFormat={imageFormat} width="400px" />
+        <Webcam ref={webcamRef} screenshotFormat={imageFormat} width="400px" mirrored={true} />
       )}
 
       {!imageUrl && (

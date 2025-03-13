@@ -8,37 +8,33 @@ function App() {
   const [selectedFrame, setSelectedFrame] = useState(""); // 선택된 프레임 저장
   const [imageUrl, setImageUrl] = useState(""); // 합성된 이미지 URL 저장
   const [imageFormat, setImageFormat] = useState("image/jpeg"); // 이미지 포맷 설정
-  const [showWebcam, setShowWebcam] = useState(true); // 카메라 표시 여부 상태
-  const [showPreview, setShowPreview] = useState(true); // 미리보기 상태
 
-  // 캡처할 사진 크기 설정
+  // 네 컷 사진 위치 정보 (x, y 좌표)
+  const positions = [
+    { x: 71, y: 68 },
+    { x: 741, y: 68 },
+    { x: 71, y: 608 },
+    { x: 741, y: 608 },
+  ];
+
   const targetWidth = 654;
   const targetHeight = 523;
+  const frameWidth = 1800;
+  const frameHeight = 1200;
 
-  // 사진 찍기 함수 (크롭 기능 추가 + 좌우반전)
+  // 사진 찍기 함수
   const capturePhoto = () => {
+    if (!webcamRef.current) return;
     const imageSrc = webcamRef.current.getScreenshot();
     if (!imageSrc) return;
+    savePhoto(imageSrc);
+  };
 
-    const img = new Image();
-    img.src = imageSrc;
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-
-      canvas.width = targetWidth;
-      canvas.height = targetHeight;
-
-      ctx.translate(targetWidth, 0); // 좌우반전 적용
-      ctx.scale(-1, 1);
-
-      ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
-
-      const flippedImage = canvas.toDataURL(imageFormat);
-      if (photos.length < 4) {
-        setPhotos([...photos, flippedImage]);
-      }
-    };
+  // 찍은 사진 저장 함수
+  const savePhoto = (photoData) => {
+    if (photos.length < 4) {
+      setPhotos([...photos, photoData]);
+    }
   };
 
   // 다시 찍기 함수
@@ -46,8 +42,6 @@ function App() {
     setPhotos([]);
     setImageUrl("");
     setSelectedFrame("");
-    setShowWebcam(true);
-    setShowPreview(true);
   };
 
   // 프레임 선택 함수
@@ -55,18 +49,14 @@ function App() {
     setSelectedFrame(frame);
   };
 
-  // 합성된 이미지 만들기 (사진만 좌우반전)
+  // 합성된 이미지 만들기
   const createCollage = () => {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
 
-    // 캔버스 크기 설정
-    const frameWidth = 1800;
-    const frameHeight = 1200;
     canvas.width = frameWidth;
     canvas.height = frameHeight;
 
-    // 프레임 이미지 불러오기
     const frameImg = new Image();
     frameImg.src = selectedFrame;
 
@@ -76,104 +66,136 @@ function App() {
         img.src = photos[i];
 
         img.onload = () => {
-          const x = i % 2 === 0 ? 71 : 741;
-          const y = i < 2 ? 68 : 608;
-
-          // 사진 좌우반전 적용
-          ctx.save();
-          ctx.translate(x + targetWidth, y); 
-          ctx.scale(-1, 1);
-          ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
-          ctx.restore();
+          ctx.drawImage(img, positions[i].x, positions[i].y, targetWidth, targetHeight);
 
           if (i === 3) {
             ctx.drawImage(frameImg, 0, 0, frameWidth, frameHeight);
-            const url = canvas.toDataURL(imageFormat);
-            setImageUrl(url);
-            setShowPreview(false);
+            setImageUrl(canvas.toDataURL(imageFormat));
           }
         };
       }
     };
   };
 
-  // 네 컷 사진 미리보기 (좌우반전 적용)
-  const renderPhotos = () => {
-    return (
-      <div style={{ position: "relative", width: "1800px", height: "1200px", margin: "20px auto" }}>
-        {selectedFrame && (
-          <img
-            src={selectedFrame}
-            alt="Frame"
-            style={{
-              position: "absolute",
-              top: "0px",
-              left: "0px",
-              width: "1800px",
-              height: "1200px",
-              zIndex: 1,
-            }}
-          />
-        )}
+  return (
+    <div style={{ textAlign: "center", fontFamily: "Apple Gothic, sans-serif" }}>
+      <h1 style={{ fontSize: "2rem", margin: "20px 0" }}>나희네 네컷</h1>
 
-        {photos.map((photo, index) => {
-          const x = index % 2 === 0 ? 71 : 741;
-          const y = index < 2 ? 68 : 608;
-          return (
+      {!imageUrl && (
+        <div
+          style={{
+            position: "relative",
+            width: `${frameWidth}px`,
+            height: `${frameHeight}px`,
+            overflow: "hidden",
+            margin: "auto",
+          }}
+        >
+          {/* 찍은 사진 미리보기 (4컷 다 찍어도 유지됨) */}
+          {photos.map((photo, index) => (
             <img
               key={index}
               src={photo}
               alt={`Captured ${index + 1}`}
               style={{
                 position: "absolute",
-                top: `${y}px`,
-                left: `${x}px`,
+                top: `${positions[index].y}px`,
+                left: `${positions[index].x}px`,
                 width: `${targetWidth}px`,
                 height: `${targetHeight}px`,
-                objectFit: "cover",
-                zIndex: 0,
-                transform: "scaleX(-1)", // ✅ 미리보기에서 좌우반전 적용!
+                zIndex: 1, // 사진이 프레임보다 뒤에 배치됨
+                transform: "scaleX(1)", // 좌우반전 유지
               }}
             />
-          );
-        })}
-      </div>
-    );
-  };
+          ))}
 
-  return (
-    <div style={{ textAlign: "center", fontFamily: "Apple Gothic, sans-serif" }}>
-      <h1 style={{ fontSize: "2rem", margin: "20px 0" }}>나희네 네컷</h1>
-
-      {showWebcam && photos.length < 4 && (
-        <Webcam
-          ref={webcamRef}
-          screenshotFormat={imageFormat}
-          width={targetWidth}
-          height={targetHeight}
-          mirrored={true} // ✅ 웹캠 화면 좌우반전
-        />
-      )}
-
-      {!imageUrl && (
-        <>
-          <div style={{ marginTop: "20px" }}>
-            <button onClick={capturePhoto}>📸 사진 찍기</button>
-            {photos.length > 0 && <button onClick={resetPhotos}>다시 찍기</button>}
-          </div>
-
-          <div style={{ marginTop: "20px" }}>
-            <button onClick={() => selectFrame("/frames/frame1.png")}>프레임 1 선택</button>
-            <button onClick={() => selectFrame("/frames/frame2.png")}>프레임 2 선택</button>
-            <button onClick={() => selectFrame("/frames/frame3.png")}>프레임 3 선택</button>
-          </div>
-
-          {photos.length === 4 && selectedFrame && (
-            <button onClick={createCollage}>합성된 사진 만들기</button>
+          {/* 웹캠 (4컷 다 찍으면 안 보이도록 설정) */}
+          {photos.length < 4 && (
+            <div
+              style={{
+                position: "absolute",
+                top: `${positions[photos.length].y}px`,
+                left: `${positions[photos.length].x}px`,
+                width: `${targetWidth}px`,
+                height: `${targetHeight}px`,
+                border: "2px solid red",
+                zIndex: 2,
+              }}
+            >
+              <Webcam
+                ref={webcamRef}
+                screenshotFormat={imageFormat}
+                width={targetWidth}
+                height={targetHeight}
+                mirrored={true}
+                videoConstraints={{
+                  width: targetWidth,
+                  height: targetHeight,
+                  facingMode: "user",
+                }}
+              />
+            </div>
           )}
-        </>
+
+          {/* 웹캠 위에 반투명한 프레임 오버레이 추가 */}
+          {selectedFrame && (
+            <img
+              src={selectedFrame}
+              alt="Frame"
+              style={{
+                position: "absolute",
+                top: "0",
+                left: "0",
+                width: "100%",
+                height: "100%",
+                zIndex: 3, // 프레임이 제일 앞에 배치됨
+                opacity: 1, // 프레임 반투명 설정
+              }}
+            />
+          )}
+        </div>
       )}
 
+      {/* 버튼 UI */}
+      {!imageUrl && (
+        <div style={{ marginTop: "20px", display: "flex", justifyContent: "center", gap: "10px" }}>
+          {photos.length < 4 && (
+            <button onClick={capturePhoto} style={{ padding: "10px 20px", fontSize: "1rem" }}>
+              📸 사진 찍기
+            </button>
+          )}
+          {photos.length > 0 && (
+            <button onClick={resetPhotos} style={{ padding: "10px 20px", fontSize: "1rem" }}>
+              다시 찍기
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* 프레임 선택 버튼 */}
+      {!imageUrl && (
+        <div
+          style={{
+            marginTop: "10px",
+            display: "flex",
+            justifyContent: "center",
+            gap: "10px",
+          }}
+        >
+          <button onClick={() => selectFrame("/frames/frame1.png")}>필름 프레임</button>
+          <button onClick={() => selectFrame("/frames/frame2.png")}>엑스디너리 히어로즈 승민 프레임</button>
+          <button onClick={() => selectFrame("/frames/frame3.png")}>프레임 3 선택</button>
+        </div>
+      )}
+
+      {/* 합성된 이미지 만들기 버튼 */}
+      {photos.length === 4 && selectedFrame && !imageUrl && (
+        <div style={{ marginTop: "20px" }}>
+          <button onClick={createCollage}>합성된 사진 만들기</button>
+        </div>
+      )}
+
+      {/* 합성된 이미지 표시 및 다운로드 */}
       {imageUrl && (
         <div style={{ marginTop: "20px" }}>
           <img src={imageUrl} alt="Collage" style={{ maxWidth: "100%" }} />
@@ -191,12 +213,11 @@ function App() {
         </div>
       )}
 
+      {/* 이미지 포맷 선택 */}
       <div style={{ marginTop: "20px" }}>
         <button onClick={() => setImageFormat("image/jpeg")}>JPEG 포맷</button>
         <button onClick={() => setImageFormat("image/png")}>PNG 포맷</button>
       </div>
-
-      {showPreview && renderPhotos()}
     </div>
   );
 }

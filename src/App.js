@@ -24,17 +24,9 @@ function App() {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
 
-      let sx = 0,
-        sy = 0,
-        sWidth = img.width,
-        sHeight = img.height;
-
-      if (img.width > targetWidth || img.height > targetHeight) {
-        sx = (img.width - targetWidth) / 2;
-        sy = (img.height - targetHeight) / 2;
-        sWidth = targetWidth;
-        sHeight = targetHeight;
-      }
+      let scale = Math.max(targetWidth / img.width, targetHeight / img.height);
+      let newWidth = img.width * scale;
+      let newHeight = img.height * scale;
 
       canvas.width = targetWidth;
       canvas.height = targetHeight;
@@ -42,7 +34,13 @@ function App() {
       ctx.save();
       ctx.translate(targetWidth, 0);
       ctx.scale(-1, 1); // 사진 찍을 때 좌우반전 적용
-      ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, targetWidth, targetHeight);
+      ctx.drawImage(
+        img,
+        (targetWidth - newWidth) / 2,
+        (targetHeight - newHeight) / 2,
+        newWidth,
+        newHeight
+      );
       ctx.restore();
 
       const flippedImage = canvas.toDataURL(imageFormat);
@@ -161,13 +159,13 @@ function App() {
           </div>
 
           <div style={{ marginTop: "20px" }}>
-            <button onClick={() => selectFrame("/frames/frame1.png")}>프레임 1 선택</button>
+            <button onClick={() => selectFrame("/frames/frame1.png")}>필름 프레임</button>
             <button onClick={() => selectFrame("/frames/frame2.png")}>프레임 2 선택</button>
             <button onClick={() => selectFrame("/frames/frame3.png")}>프레임 3 선택</button>
           </div>
 
           {photos.length === 4 && selectedFrame && (
-            <button onClick={createCollage}>합성된 사진 만들기</button>
+            <button onClick={createCollage}>사진 만들기📸</button>
           )}
         </>
       )}
@@ -190,8 +188,8 @@ function App() {
       )}
 
       <div style={{ marginTop: "20px" }}>
-        <button onClick={() => setImageFormat("image/jpeg")}>JPEG 포맷</button>
-        <button onClick={() => setImageFormat("image/png")}>PNG 포맷</button>
+        <button onClick={() => setImageFormat("image/jpeg")}>JPEG</button>
+        <button onClick={() => setImageFormat("image/png")}>PNG</button>
       </div>
 
       {showPreview && renderPhotos()}

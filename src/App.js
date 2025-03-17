@@ -69,17 +69,6 @@ function App() {
           const aspectRatio = img.width / img.height;
           let newWidth, newHeight, offsetX = 0, offsetY = 0;
 
-          if (img.width < targetWidth) {
-            // 📌 가로가 프레임보다 작으면 그대로 확대 (자르지 않음)
-            newWidth = targetWidth;
-            newHeight = targetWidth / aspectRatio;
-          } else {
-            // 📌 가로가 크면 기존처럼 잘라냄
-            newHeight = targetHeight;
-            newWidth = aspectRatio * targetHeight;
-            offsetX = (newWidth - targetWidth) / 2; // 가로 중심 정렬
-          }
-
           ctx.drawImage(
             img,
             offsetX,

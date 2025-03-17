@@ -61,19 +61,43 @@ function App() {
     frameImg.src = selectedFrame;
 
     frameImg.onload = () => {
-      for (let i = 0; i < photos.length; i++) {
+      photos.forEach((photo, i) => {
         const img = new Image();
-        img.src = photos[i];
+        img.src = photo;
 
         img.onload = () => {
-          ctx.drawImage(img, positions[i].x, positions[i].y, targetWidth, targetHeight);
+          const aspectRatio = img.width / img.height;
+          let newWidth, newHeight, offsetX = 0, offsetY = 0;
+
+          if (img.width < targetWidth) {
+            // 📌 가로가 프레임보다 작으면 그대로 확대 (자르지 않음)
+            newWidth = targetWidth;
+            newHeight = targetWidth / aspectRatio;
+          } else {
+            // 📌 가로가 크면 기존처럼 잘라냄
+            newHeight = targetHeight;
+            newWidth = aspectRatio * targetHeight;
+            offsetX = (newWidth - targetWidth) / 2; // 가로 중심 정렬
+          }
+
+          ctx.drawImage(
+            img,
+            offsetX,
+            offsetY,
+            newWidth - 2 * offsetX,
+            newHeight - 2 * offsetY,
+            positions[i].x,
+            positions[i].y,
+            targetWidth,
+            targetHeight
+          );
 
           if (i === 3) {
             ctx.drawImage(frameImg, 0, 0, frameWidth, frameHeight);
             setImageUrl(canvas.toDataURL(imageFormat));
           }
         };
-      }
+      });
     };
   };
 
@@ -212,12 +236,6 @@ function App() {
           </button>
         </div>
       )}
-
-      {/* 이미지 포맷 선택 */}
-      <div style={{ marginTop: "20px" }}>
-        <button onClick={() => setImageFormat("image/jpeg")}>JPEG 포맷</button>
-        <button onClick={() => setImageFormat("image/png")}>PNG 포맷</button>
-      </div>
     </div>
   );
 }

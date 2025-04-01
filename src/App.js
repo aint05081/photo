@@ -115,6 +115,15 @@ function App() {
   const webcamWidth = window.innerWidth < 768 ? "100%" : targetWidth;
   const webcamHeight = window.innerWidth < 768 ? "auto" : targetHeight;
 
+  // 비율을 유지하면서 웹캠 확대/축소
+  const webcamStyle = {
+    width: "100%",
+    height: "auto",
+    maxWidth: window.innerWidth < 768 ? "100%" : targetWidth,
+    maxHeight: window.innerWidth < 768 ? "auto" : targetHeight,
+    objectFit: "cover", // 비율을 유지하면서 크기를 맞춤
+  };
+
   return (
     <div style={{ textAlign: "center", fontFamily: "Apple Gothic, sans-serif" }}>
       {/* 로고 이미지 추가 */}
@@ -165,14 +174,15 @@ function App() {
               <Webcam
                 ref={webcamRef}
                 screenshotFormat={imageFormat}
-                width={webcamWidth}
-                height={webcamHeight}
+                width="100%"
+                height="auto"
                 mirrored={true}
                 videoConstraints={{
                   width: targetWidth,
                   height: targetHeight,
                   facingMode: "user",
                 }}
+                videoStyle={webcamStyle} // 비율을 유지하면서 크기 맞추기
               />
             </div>
           )}

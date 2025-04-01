@@ -1,4 +1,4 @@
-/* App.css */
+/* 기본 스타일 */
 body {
   background-color: #fef9f4; /* 부드러운 크림색 배경 */
   font-family: "Apple Gothic", sans-serif;
@@ -41,31 +41,18 @@ button:disabled {
   cursor: not-allowed;
 }
 
-div {
-  text-align: center;
-  font-family: "Apple Gothic", sans-serif;
-}
-
-#app-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: #fff; /* 화이트 배경 */
-  border-radius: 15px;
-  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-  padding: 30px;
-  width: 900px;
-}
-
+/* 반응형 웹캠 */
 .webcam-container {
   display: flex;
   justify-content: center;
+  width: 100%;
 }
 
 .img-container {
   position: relative;
-  width: 1800px;
-  height: 1200px;
+  width: 100%;
+  height: 0;
+  padding-bottom: 66.67%; /* 3:2 비율로 유지 */
   margin-top: 20px;
   margin-bottom: 20px;
 }
@@ -104,3 +91,56 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* 모바일 최적화: 작은 화면에서 이미지 크기 및 버튼 크기 조정 */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem; /* 제목 크기 줄이기 */
+  }
+
+  button {
+    padding: 10px 18px;
+    font-size: 1rem; /* 버튼 크기 줄이기 */
+  }
+
+  .img-container {
+    width: 100%;
+    height: auto; /* 높이 자동 조정 */
+  }
+
+  .webcam-container {
+    width: 100%;
+    height: auto;
+  }
+
+  /* 웹캠 미리보기 크기 조정 */
+  .webcam-container video {
+    width: 100%;
+    height: auto;
+  }
+}
+
+/* 초소형 모바일 화면에 맞추기 */
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.8rem; /* 제목 크기 더 줄이기 */
+  }
+
+  button {
+    padding: 8px 16px;
+    font-size: 0.9rem; /* 버튼 크기 줄이기 */
+  }
+
+  .img-container {
+    width: 100%;
+    padding-bottom: 75%; /* 세로 비율 조금 더 높여서 보기 좋게 */
+  }
+
+  .webcam-container {
+    width: 100%;
+    height: auto;
+  }
+
+  .img-preview img {
+    object-fit: contain; /* 이미지 크기 맞추기 */
+  }
+}

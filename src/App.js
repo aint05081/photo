@@ -111,6 +111,10 @@ function App() {
     });
   };
 
+  // 모바일 화면에서 웹캠 크기 동적으로 설정
+  const webcamWidth = window.innerWidth < 768 ? "100%" : targetWidth;
+  const webcamHeight = window.innerWidth < 768 ? "auto" : targetHeight;
+
   return (
     <div style={{ textAlign: "center", fontFamily: "Apple Gothic, sans-serif" }}>
       {/* 로고 이미지 추가 */}
@@ -120,7 +124,6 @@ function App() {
         style={{ width: "400px", margin: "20px 0" }} 
       />
   
-
       {!imageUrl && (
         <div
           style={{
@@ -162,8 +165,8 @@ function App() {
               <Webcam
                 ref={webcamRef}
                 screenshotFormat={imageFormat}
-                width={targetWidth}
-                height={targetHeight}
+                width={webcamWidth}
+                height={webcamHeight}
                 mirrored={true}
                 videoConstraints={{
                   width: targetWidth,

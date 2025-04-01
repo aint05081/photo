@@ -5,9 +5,9 @@ import "./App.css"; // CSS 파일 임포트
 function App() {
   const webcamRef = useRef(null);
   const [photos, setPhotos] = useState([]);
-  const [selectedFrame, setSelectedFrame] = useState(""); // 선택된 프레임 저장
-  const [imageUrl, setImageUrl] = useState(""); // 합성된 이미지 URL 저장
-  const [imageFormat, setImageFormat] = useState("image/jpeg"); // 이미지 포맷 설정
+  const [selectedFrame, setSelectedFrame] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageFormat, setImageFormat] = useState("image/jpeg");
 
   // 네 컷 사진 위치 정보 (x, y 좌표)
   const positions = [
@@ -22,7 +22,7 @@ function App() {
   const frameWidth = 1800;
   const frameHeight = 1200;
 
-  // 사진 찍기 함수
+  // 사진 찍기
   const capturePhoto = () => {
     if (!webcamRef.current) return;
     const imageSrc = webcamRef.current.getScreenshot();
@@ -30,21 +30,21 @@ function App() {
     savePhoto(imageSrc);
   };
 
-  // 찍은 사진 저장 함수
+  // 찍은 사진 저장
   const savePhoto = (photoData) => {
     if (photos.length < 4) {
       setPhotos([...photos, photoData]);
     }
   };
 
-  // 다시 찍기 함수
+  // 다시 찍기
   const resetPhotos = () => {
     setPhotos([]);
     setImageUrl("");
     setSelectedFrame("");
   };
 
-  // 프레임 선택 함수
+  // 프레임 선택
   const selectFrame = (frame) => {
     setSelectedFrame(frame);
   };
@@ -60,39 +60,66 @@ function App() {
     const frameImg = new Image();
     frameImg.src = selectedFrame;
 
-    frameImg.onload = () => {
+    let imagesLoaded = 0;
+
+    const drawImages = () => {
+      if (imagesLoaded !== photos.length) return;
+
       photos.forEach((photo, i) => {
         const img = new Image();
         img.src = photo;
 
         img.onload = () => {
-          const aspectRatio = img.width / img.height;
           let newWidth, newHeight, offsetX = 0, offsetY = 0;
+          const imgWidth = img.width;
+          const imgHeight = img.height;
+          const aspectRatio = imgWidth / imgHeight;
+          const targetAspectRatio = targetWidth / targetHeight;
+
+          if (aspectRatio > targetAspectRatio) {
+            newHeight = targetHeight;
+            newWidth = targetHeight * aspectRatio;
+            offsetX = (newWidth - targetWidth) / 2;
+          } else {
+            newWidth = targetWidth;
+            newHeight = targetWidth / aspectRatio;
+            offsetY = (newHeight - targetHeight) / 2;
+          }
 
           ctx.drawImage(
             img,
-            offsetX,
-            offsetY,
-            newWidth - 2 * offsetX,
-            newHeight - 2 * offsetY,
-            positions[i].x,
-            positions[i].y,
-            targetWidth,
-            targetHeight
+            offsetX, offsetY, imgWidth - 2 * offsetX, imgHeight - 2 * offsetY,
+            positions[i].x, positions[i].y, targetWidth, targetHeight
           );
 
-          if (i === 3) {
+          if (i === photos.length - 1) {
             ctx.drawImage(frameImg, 0, 0, frameWidth, frameHeight);
             setImageUrl(canvas.toDataURL(imageFormat));
           }
         };
       });
     };
+
+    frameImg.onload = drawImages;
+    photos.forEach(photo => {
+      const img = new Image();
+      img.src = photo;
+      img.onload = () => {
+        imagesLoaded++;
+        drawImages();
+      };
+    });
   };
 
   return (
     <div style={{ textAlign: "center", fontFamily: "Apple Gothic, sans-serif" }}>
-      <h1 style={{ fontSize: "2rem", margin: "20px 0" }}>나희네 네컷</h1>
+      {/* 로고 이미지 추가 */}
+      <img 
+        src="/logo.png"  // 로고 이미지 경로 (public 폴더에 logo.png 넣어두면 됨)
+        alt="나희네 네컷 로고"
+        style={{ width: "400px", margin: "20px 0" }} 
+      />
+  
 
       {!imageUrl && (
         <div
@@ -104,7 +131,6 @@ function App() {
             margin: "auto",
           }}
         >
-          {/* 찍은 사진 미리보기 (4컷 다 찍어도 유지됨) */}
           {photos.map((photo, index) => (
             <img
               key={index}
@@ -116,13 +142,11 @@ function App() {
                 left: `${positions[index].x}px`,
                 width: `${targetWidth}px`,
                 height: `${targetHeight}px`,
-                zIndex: 1, // 사진이 프레임보다 뒤에 배치됨
-                transform: "scaleX(1)", // 좌우반전 유지
+                zIndex: -1,
               }}
             />
           ))}
 
-          {/* 웹캠 (4컷 다 찍으면 안 보이도록 설정) */}
           {photos.length < 4 && (
             <div
               style={{
@@ -150,7 +174,6 @@ function App() {
             </div>
           )}
 
-          {/* 웹캠 위에 반투명한 프레임 오버레이 추가 */}
           {selectedFrame && (
             <img
               src={selectedFrame}
@@ -161,15 +184,13 @@ function App() {
                 left: "0",
                 width: "100%",
                 height: "100%",
-                zIndex: 3, // 프레임이 제일 앞에 배치됨
-                opacity: 1, // 프레임 반투명 설정
+                zIndex: 3,
               }}
             />
           )}
         </div>
       )}
 
-      {/* 버튼 UI */}
       {!imageUrl && (
         <div style={{ marginTop: "20px", display: "flex", justifyContent: "center", gap: "10px" }}>
           {photos.length < 4 && (
@@ -185,7 +206,6 @@ function App() {
         </div>
       )}
 
-      {/* 프레임 선택 버튼 */}
       {!imageUrl && (
         <div
           style={{
@@ -196,19 +216,17 @@ function App() {
           }}
         >
           <button onClick={() => selectFrame("/frames/frame1.png")}>필름 프레임</button>
-          <button onClick={() => selectFrame("/frames/frame2.png")}>엑스디너리 히어로즈 승민 프레임</button>
+          <button onClick={() => selectFrame("/frames/frame2.png")}>엑스디너리히어로즈 프레임</button>
           <button onClick={() => selectFrame("/frames/frame3.png")}>프레임 3 선택</button>
         </div>
       )}
 
-      {/* 합성된 이미지 만들기 버튼 */}
       {photos.length === 4 && selectedFrame && !imageUrl && (
         <div style={{ marginTop: "20px" }}>
           <button onClick={createCollage}>합성된 사진 만들기</button>
         </div>
       )}
 
-      {/* 합성된 이미지 표시 및 다운로드 */}
       {imageUrl && (
         <div style={{ marginTop: "20px" }}>
           <img src={imageUrl} alt="Collage" style={{ maxWidth: "100%" }} />

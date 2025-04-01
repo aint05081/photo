@@ -230,7 +230,8 @@ function App() {
         >
           <button onClick={() => selectFrame("/frames/frame1.png")}>필름 프레임</button>
           <button onClick={() => selectFrame("/frames/frame2.png")}>엑스디너리히어로즈 프레임</button>
-          <button onClick={() => selectFrame("/frames/frame3.png")}>프레임 3 선택</button>
+          <button onClick={() => selectFrame("/frames/frame3.png")}>맥북 프레임</button>
+          <button onClick={() => selectFrame("/frames/frame4.png")}>프레임 준비 중</button>
         </div>
       )}
 

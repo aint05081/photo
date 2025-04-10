@@ -22,7 +22,6 @@ function App() {
   const frameWidth = 1800;
   const frameHeight = 1200;
 
-  // 사진 찍기
   const capturePhoto = () => {
     if (!webcamRef.current) return;
     const imageSrc = webcamRef.current.getScreenshot();
@@ -30,26 +29,22 @@ function App() {
     savePhoto(imageSrc);
   };
 
-  // 찍은 사진 저장
   const savePhoto = (photoData) => {
     if (photos.length < 4) {
       setPhotos([...photos, photoData]);
     }
   };
 
-  // 다시 찍기
   const resetPhotos = () => {
     setPhotos([]);
     setImageUrl("");
     setSelectedFrame("");
   };
 
-  // 프레임 선택
   const selectFrame = (frame) => {
     setSelectedFrame(frame);
   };
 
-  // 합성된 이미지 만들기
   const createCollage = () => {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
@@ -111,28 +106,14 @@ function App() {
     });
   };
 
-  // 모바일 화면에서 웹캠 크기 동적으로 설정
-  const webcamWidth = window.innerWidth < 768 ? "100%" : targetWidth;
-  const webcamHeight = window.innerWidth < 768 ? "auto" : targetHeight;
-
-  // 비율을 유지하면서 웹캠 확대/축소
-  const webcamStyle = {
-    width: "100%",
-    height: "auto",
-    maxWidth: window.innerWidth < 768 ? "100%" : targetWidth,
-    maxHeight: window.innerWidth < 768 ? "auto" : targetHeight,
-    objectFit: "cover", // 비율을 유지하면서 크기를 맞춤
-  };
-
   return (
     <div style={{ textAlign: "center", fontFamily: "Apple Gothic, sans-serif" }}>
-      {/* 로고 이미지 추가 */}
-      <img 
-        src="/logo.png"  // 로고 이미지 경로 (public 폴더에 logo.png 넣어두면 됨)
+      <img
+        src="/logo.png"
         alt="나희네 네컷 로고"
-        style={{ width: "400px", margin: "20px 0" }} 
+        style={{ width: "400px", maxWidth: "90%", margin: "20px 0" }}
       />
-  
+
       {!imageUrl && (
         <div
           style={{
@@ -141,6 +122,7 @@ function App() {
             height: `${frameHeight}px`,
             overflow: "hidden",
             margin: "auto",
+            maxWidth: "100%",
           }}
         >
           {photos.map((photo, index) => (
@@ -169,20 +151,19 @@ function App() {
                 height: `${targetHeight}px`,
                 border: "2px solid red",
                 zIndex: 2,
+                overflow: "hidden",
               }}
             >
               <Webcam
                 ref={webcamRef}
                 screenshotFormat={imageFormat}
-                width="100%"
-                height="auto"
                 mirrored={true}
-                videoConstraints={{
-                  width: targetWidth,
-                  height: targetHeight,
-                  facingMode: "user",
+                videoConstraints={{ facingMode: "user" }}
+                style={{
+                  width: "100%",
+                  aspectRatio: `${targetWidth / targetHeight}`,
+                  objectFit: "cover",
                 }}
-                videoStyle={webcamStyle} // 비율을 유지하면서 크기 맞추기
               />
             </div>
           )}
@@ -205,7 +186,7 @@ function App() {
       )}
 
       {!imageUrl && (
-        <div style={{ marginTop: "20px", display: "flex", justifyContent: "center", gap: "10px" }}>
+        <div style={{ marginTop: "20px", display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "10px" }}>
           {photos.length < 4 && (
             <button onClick={capturePhoto} style={{ padding: "10px 20px", fontSize: "1rem" }}>
               📸 사진 찍기
@@ -225,6 +206,7 @@ function App() {
             marginTop: "10px",
             display: "flex",
             justifyContent: "center",
+            flexWrap: "wrap",
             gap: "10px",
           }}
         >
@@ -245,17 +227,19 @@ function App() {
       {imageUrl && (
         <div style={{ marginTop: "20px" }}>
           <img src={imageUrl} alt="Collage" style={{ maxWidth: "100%" }} />
-          <button onClick={resetPhotos}>다시 찍기</button>
-          <button
-            onClick={() => {
-              const link = document.createElement("a");
-              link.href = imageUrl;
-              link.download = "collage.jpg";
-              link.click();
-            }}
-          >
-            다운로드
-          </button>
+          <div style={{ marginTop: "10px" }}>
+            <button onClick={resetPhotos}>다시 찍기</button>
+            <button
+              onClick={() => {
+                const link = document.createElement("a");
+                link.href = imageUrl;
+                link.download = "collage.jpg";
+                link.click();
+              }}
+            >
+              다운로드
+            </button>
+          </div>
         </div>
       )}
     </div>

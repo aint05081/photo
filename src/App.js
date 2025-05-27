@@ -5,14 +5,15 @@ import "./App.css";
 
 const commonButtonStyle = {
   padding: "15px 30px",
-  fontSize: "1.2rem",
+  fontSize: "1.4rem",
   fontWeight: "bold",
-  backgroundColor: "#fcd800",
-  border: "3px solid #388e3c",
-  color: "#1b1b1b",
-  borderRadius: "12px",
+  backgroundColor: "#fce4ec",
+  border: "3px solid #f8bbd0",
+  color: "#4a148c",
+  borderRadius: "20px",
   cursor: "pointer",
-  boxShadow: "2px 2px 0 #333",
+  boxShadow: "2px 2px 5px rgba(0,0,0,0.1)",
+  fontFamily: "'Gaegu', cursive"
 };
 
 const frameOptions = [
@@ -28,12 +29,12 @@ function App() {
   const [photos, setPhotos] = useState([]);
   const [selectedFrame, setSelectedFrame] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [imageFormat] = useState("image/jpeg");
   const [videoUrl, setVideoUrl] = useState("");
   const [appState, setAppState] = useState("initial");
   const [mediaRecorder, setMediaRecorder] = useState(null);
   const [imageQrUrl, setImageQrUrl] = useState("");
   const [videoQrUrl, setVideoQrUrl] = useState("");
+  const imageFormat = "image/jpeg";
 
   const positions = [
     { x: 71, y: 68 },
@@ -59,10 +60,7 @@ function App() {
 
   const startRecording = () => {
     const stream = webcamRef.current?.video?.srcObject;
-    if (!stream || !(stream instanceof MediaStream)) {
-      console.error("웹캠 스트림이 유효하지 않습니다.");
-      return;
-    }
+    if (!stream || !(stream instanceof MediaStream)) return;
 
     const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
     const chunks = [];
@@ -75,6 +73,7 @@ function App() {
       const blob = new Blob(chunks, { type: "video/webm" });
       const url = URL.createObjectURL(blob);
       setVideoUrl(url);
+
       try {
         const uploadUrl = await uploadToTransferSh(blob, "video.webm");
         const shortUrl = await shortenWithTnyIm(uploadUrl);
@@ -98,8 +97,7 @@ function App() {
   };
 
   const capturePhoto = () => {
-    if (!webcamRef.current) return;
-    const imageSrc = webcamRef.current.getScreenshot();
+    const imageSrc = webcamRef.current?.getScreenshot();
     if (!imageSrc) return;
     setPhotos((prev) => {
       const newPhotos = [...prev, imageSrc];
@@ -118,11 +116,11 @@ function App() {
     canvas.width = frameWidth;
     canvas.height = frameHeight;
 
-    const loadImage = (src) => new Promise((resolve, reject) => {
+    const loadImage = (src) => new Promise((res, rej) => {
       const img = new Image();
       img.crossOrigin = "anonymous";
-      img.onload = () => resolve(img);
-      img.onerror = reject;
+      img.onload = () => res(img);
+      img.onerror = rej;
       img.src = src;
     });
 
@@ -145,8 +143,17 @@ function App() {
           offsetY = (newHeight - targetHeight) / 2;
         }
 
-        ctx.drawImage(img, offsetX, offsetY, img.width - 2 * offsetX, img.height - 2 * offsetY,
-          positions[i].x, positions[i].y, targetWidth, targetHeight);
+        ctx.drawImage(
+          img,
+          offsetX,
+          offsetY,
+          img.width - 2 * offsetX,
+          img.height - 2 * offsetY,
+          positions[i].x,
+          positions[i].y,
+          targetWidth,
+          targetHeight
+        );
       });
 
       ctx.drawImage(frameImg, 0, 0, frameWidth, frameHeight);
@@ -158,7 +165,7 @@ function App() {
       const shortUrl = await shortenWithTnyIm(uploadUrl);
       setImageQrUrl(shortUrl);
     } catch (err) {
-      console.error("콜라주 생성 실패:", err);
+      console.error("콜라주 생성 실패", err);
     }
   };
 
@@ -193,7 +200,6 @@ function App() {
   return (
     <div style={{
       textAlign: "center",
-      fontFamily: "Apple Gothic, sans-serif",
       paddingBottom: "180px",
       backgroundImage: "url('/frames/farm-bg.png')",
       backgroundSize: "cover",
@@ -222,8 +228,8 @@ function App() {
                   onClick={() => setSelectedFrame(path)}
                   style={{
                     ...commonButtonStyle,
-                    borderColor: selectedFrame === path ? "#1b5e20" : "#388e3c",
-                    backgroundColor: selectedFrame === path ? "#dcedc8" : "#fcd800"
+                    borderColor: selectedFrame === path ? "#ec407a" : "#f8bbd0",
+                    backgroundColor: selectedFrame === path ? "#fff0f5" : "#fce4ec"
                   }}
                 >
                   {frame.name}
@@ -234,8 +240,8 @@ function App() {
 
           {selectedFrame && (
             <div style={{ marginTop: "20px" }}>
-              <img src={selectedFrame} alt="선택된 프레임 미리보기" style={{ maxWidth: "90%", border: "3px solid #4caf50" }} />
-              <p style={{ fontSize: "0.9rem", marginTop: "5px" }}>선택된 프레임 미리보기</p>
+              <img src={selectedFrame} alt="선택된 프레임 미리보기" style={{ maxWidth: "90%", border: "3px solid #ec407a" }} />
+              <p style={{ fontSize: "1.1rem", marginTop: "5px", color: "#000" }}>선택된 프레임 미리보기</p>
             </div>
           )}
         </div>
@@ -255,7 +261,7 @@ function App() {
           {photos.length < 4 && (
             <div style={{
               position: "absolute", top: `${positions[photos.length].y}px`, left: `${positions[photos.length].x}px`,
-              width: `${targetWidth}px`, height: `${targetHeight}px`, border: "2px solid red", zIndex: 2
+              width: `${targetWidth}px`, height: `${targetHeight}px`, border: "2px solid #f48fb1", zIndex: 2
             }}>
               <Webcam ref={webcamRef} screenshotFormat={imageFormat} mirrored={true}
                 videoConstraints={{ facingMode: "user" }}
@@ -275,19 +281,19 @@ function App() {
 
       {appState === "done" && (
         <>
-          <img src={imageUrl} alt="Collage" style={{ maxWidth: "100%" }} />
+          <img src={imageUrl} alt="Collage" />
           {imageQrUrl && (
-            <div style={{ border: "4px dashed #388e3c", padding: "10px", display: "inline-block", marginTop: "10px" }}>
+            <div style={{ border: "4px dashed #ec407a", padding: "10px", display: "inline-block", marginTop: "10px" }}>
               <QRCodeCanvas value={imageQrUrl} size={128} />
-              <p style={{ fontSize: "0.9rem", marginTop: "5px" }}>📱 스캔해서 다운로드</p>
+              <p style={{ fontSize: "1rem", marginTop: "5px", color: "#000" }}>📱 사진 다운로드</p>
             </div>
           )}
 
           <video src={videoUrl} controls style={{ maxWidth: "100%", transform: "scaleX(-1)", marginTop: "30px" }} />
           {videoQrUrl && (
-            <div style={{ border: "4px dashed #388e3c", padding: "10px", display: "inline-block", marginTop: "10px" }}>
+            <div style={{ border: "4px dashed #ec407a", padding: "10px", display: "inline-block", marginTop: "10px" }}>
               <QRCodeCanvas value={videoQrUrl} size={128} />
-              <p style={{ fontSize: "0.9rem", marginTop: "5px" }}>📱 스캔해서 다운로드</p>
+              <p style={{ fontSize: "1rem", marginTop: "5px", color: "#000" }}>📱 영상 다운로드</p>
             </div>
           )}
 
@@ -298,7 +304,7 @@ function App() {
               link.download = "collage.jpg";
               link.click();
             }} style={commonButtonStyle}>
-              📥 사진 다운로드
+              📥 사진 저장
             </button>
             <button onClick={() => {
               const link = document.createElement("a");
@@ -306,7 +312,7 @@ function App() {
               link.download = "video.webm";
               link.click();
             }} style={{ ...commonButtonStyle, marginLeft: "10px" }}>
-              📥 영상 다운로드
+              📥 영상 저장
             </button>
           </div>
 

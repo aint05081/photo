@@ -20,7 +20,7 @@ const frameOptions = [
   { name: "뷰티풀 마인드", file: "frame1.png" },
   { name: "기본1", file: "frame3.png" },
   { name: "기본2", file: "frame4.png" },
-  { name: "기본3", file: "frame3.png" },
+  { name: "기본3", file: "frame5.png" },
 ];
 
 function App() {
